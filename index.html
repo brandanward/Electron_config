@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Electron Configuration Game</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f9f9f9;
+      text-align: center;
+      padding: 2em;
+    }
+    .question {
+      font-size: 1.5em;
+      margin: 1em 0;
+    }
+    .options button {
+      margin: 0.5em;
+      padding: 0.75em 1.25em;
+      font-size: 1em;
+    }
+    .feedback {
+      font-size: 1.25em;
+      margin-top: 1em;
+    }
+    .next-btn {
+      display: none;
+      margin-top: 1.5em;
+      padding: 0.6em 1.2em;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      font-size: 1em;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Electron Configuration Game</h1>
+  <div class="question" id="question"></div>
+  <div class="options" id="options"></div>
+  <div class="feedback" id="feedback"></div>
+  <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Next Question</button>
+
+  <script>
+    const dataUrl = 'https://raw.githubusercontent.com/brandanward/Electron_config/516625dd5fa3cb845f97deb1acc1e48dff8b730c/electron_config_simplified.json';
+
+    let allQuestions = [];
+    let currentIndex = 0;
+    let elementNames = [];
+
+    async function fetchData() {
+      const res = await fetch(dataUrl);
+      const data = await res.json();
+      allQuestions = data.sort(() => Math.random() - 0.5); // Shuffle questions
+      elementNames = data.map(q => q.correct);
+      showQuestion();
+    }
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function showQuestion() {
+      const question = allQuestions[currentIndex];
+      const config = question.config;
+      const correct = question.correct;
+      const distractors = shuffle(elementNames.filter(e => e !== correct)).slice(0, 2);
+      const options = shuffle([correct, ...distractors]);
+
+      document.getElementById('question').textContent = `Which element has this configuration: ${config}?`;
+      const optsDiv = document.getElementById('options');
+      optsDiv.innerHTML = '';
+
+      options.forEach(option => {
+        const btn = document.createElement('button');
+        btn.textContent = option;
+        btn.onclick = () => checkAnswer(option, correct);
+        optsDiv.appendChild(btn);
+      });
+
+      document.getElementById('feedback').textContent = '';
+      document.getElementById('nextBtn').style.display = 'none';
+    }
+
+    function checkAnswer(selected, correct) {
+      const feedback = document.getElementById('feedback');
+      if (selected === correct) {
+        feedback.textContent = 'Correct! You really bonded with that one! 🧪';
+        feedback.style.color = 'green';
+      } else {
+        feedback.textContent = `Nope! The correct answer was ${correct}.`;
+        feedback.style.color = 'red';
+      }
+      document.getElementById('nextBtn').style.display = 'inline-block';
+    }
+
+    function nextQuestion() {
+      currentIndex++;
+      if (currentIndex < allQuestions.length) {
+        showQuestion();
+      } else {
+        document.body.innerHTML = '<h2>You completed the game! You're totally in your element. 🎉</h2>';
+      }
+    }
+
+    fetchData();
+  </script>
+</body>
+</html>
